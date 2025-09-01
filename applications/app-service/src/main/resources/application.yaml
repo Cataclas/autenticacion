@@ -1,14 +1,58 @@
-##Spring Configuration
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
+
 spring:
   application:
-    name: Autenticacion
+    name: "Autenticacion"
   devtools:
     add-properties: false
-  h2:
-    console:
-      enabled: true
-      path: /h2
+  r2dbc:
+    url: r2dbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:crediya_auth}
+    username: ${DB_USERNAME:crediya_user}
+    password: ${DB_PASSWORD:crediya_pass}
+    pool:
+      initial-size: ${DB_POOL_INITIAL:5}
+      max-size: ${DB_POOL_MAX:20}
+      max-idle-time: ${DB_POOL_IDLE:30m}
+      validation-query: SELECT 1
   profiles:
-    include:
+    include: null
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "health,info,metrics,prometheus"
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when-authorized
+
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:8080"
+
+logging:
+  level:
+    co.com.crediya: ${LOG_LEVEL:INFO}
+    co.com.crediya.api: DEBUG
+    co.com.crediya.r2dbc: DEBUG
+    org.springframework.r2dbc: WARN
+    org.springframework.transaction: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%logger{36}] - %msg%n"
+
+# OpenAPI/Swagger Configuration
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operationsSorter: method
+    tagsSorter: alpha
+  show-actuator: false
+  group-configs:
+    - group: usuarios
+      paths-to-match: /api/v1/usuarios/**
+      display-name: "Gestión de Usuarios"
