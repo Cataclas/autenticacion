@@ -52,7 +52,10 @@ public class Handler {
                 .onErrorResume(Exception.class, ex -> {
                     log.error("[{}] Error interno en registro de usuario: {}", traceId, ex.getClass().getSimpleName(), ex);
                     return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                            .bodyValue(ErrorResponseDTO.of("Error interno del servidor", "INTERNAL_ERROR"));
+                            .bodyValue(ErrorResponseDTO.of(
+                                "Algo salió mal. Nuestro equipo técnico ha sido notificado y está trabajando para solucionarlo", 
+                                "INTERNAL_ERROR", 
+                                traceId));
                 });
     }
 }
