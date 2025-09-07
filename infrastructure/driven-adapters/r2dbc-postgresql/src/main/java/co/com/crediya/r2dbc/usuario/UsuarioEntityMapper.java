@@ -18,6 +18,7 @@ public class UsuarioEntityMapper {
         entity.setSalarioBase(usuario.getSalarioBase());
         entity.setFechaNacimiento(usuario.getFechaNacimiento());
         entity.setDireccion(usuario.getDireccion());
+        entity.setPassword(usuario.getPassword());
         // Campos de auditoría
         entity.setCreatedAt(usuario.getCreatedAt());
         entity.setUpdatedAt(usuario.getUpdatedAt());
@@ -39,6 +40,7 @@ public class UsuarioEntityMapper {
                 .salarioBase(entity.getSalarioBase())
                 .fechaNacimiento(entity.getFechaNacimiento())
                 .direccion(entity.getDireccion())
+                .password(entity.getPassword())
                 // Campos de auditoría
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())

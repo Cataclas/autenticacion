@@ -32,11 +32,25 @@ management:
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
 
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:mySecretKeyForJWTTokenGenerationThatShouldBeAtLeast256BitsLongForHS256Algorithm}
+  expiration-hours: ${JWT_EXPIRATION_HOURS:2}
+  service-secret: ${JWT_SERVICE_SECRET:serviceToServiceSecretKeyThatMustBeAtLeast256BitsLongForHS256Algorithm}
+  service-expiration-hours: ${JWT_SERVICE_EXPIRATION:24}
+
+# Roles Configuration
+roles:
+  admin: ${ADMIN_ROLE:ADMINISTRADOR}
+  asesor: ${ASESOR_ROLE:ASESOR}
+  solicitante: ${SOLICITANTE_ROLE:SOLICITANTE}
+
 logging:
   level:
-    co.com.crediya: ${LOG_LEVEL:INFO}
+    co.com.crediya: ${LOG_LEVEL:DEBUG}
     co.com.crediya.api: DEBUG
     co.com.crediya.r2dbc: DEBUG
+    co.com.crediya.usecase: DEBUG
     org.springframework.r2dbc: WARN
     org.springframework.transaction: WARN
   pattern:
@@ -53,6 +67,12 @@ springdoc:
     tagsSorter: alpha
   show-actuator: false
   group-configs:
+    - group: all
+      paths-to-match: /api/v1/**
+      display-name: "API Completa"
     - group: usuarios
       paths-to-match: /api/v1/usuarios/**
       display-name: "Gestión de Usuarios"
+    - group: auth
+      paths-to-match: /api/v1/login
+      display-name: "Autenticación"

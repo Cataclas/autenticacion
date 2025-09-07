@@ -42,6 +42,9 @@ public class UsuarioEntity {
     @Column("direccion")
     private String direccion;
     
+    @Column("password")
+    private String password;
+    
     // Campos de auditoría
     @Column("created_at")
     private LocalDateTime createdAt;

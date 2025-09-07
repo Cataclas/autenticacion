@@ -1,8 +1,10 @@
 package co.com.crediya.api;
 
+import co.com.crediya.api.config.RoleConfig;
 import co.com.crediya.api.dto.ErrorResponseDTO;
 import co.com.crediya.api.dto.UsuarioRequestDTO;
 import co.com.crediya.api.mapper.UsuarioMapper;
+import co.com.crediya.api.security.SecurityUtils;
 import co.com.crediya.model.usuario.exceptions.DatosInvalidosException;
 import co.com.crediya.model.usuario.exceptions.UsuarioYaExisteException;
 import co.com.crediya.usecase.usuario.RegistrarUsuarioUseCase;
@@ -22,11 +24,28 @@ public class Handler {
     
     private final RegistrarUsuarioUseCase registrarUsuarioUseCase;
     private final UsuarioMapper usuarioMapper;
+    private final RoleConfig roleConfig;
 
 
     public Mono<ServerResponse> registrarUsuario(ServerRequest serverRequest) {
         String traceId = java.util.UUID.randomUUID().toString().substring(0, 8);
         log.info("[{}] Iniciando registro de usuario", traceId);
+        
+        return SecurityUtils.canRegisterUsers(serverRequest.exchange(), 
+                "550e8400-e29b-41d4-a716-446655440001", "550e8400-e29b-41d4-a716-446655440003")
+                .flatMap(canRegister -> {
+                    if (!canRegister) {
+                        log.warn("[{}] Acceso denegado - usuario sin permisos", traceId);
+                        return ServerResponse.status(HttpStatus.FORBIDDEN)
+                                .bodyValue(ErrorResponseDTO.of(
+                                    "No tiene permisos para registrar usuarios", 
+                                    "ACCESO_DENEGADO"));
+                    }
+                    return procesarRegistro(serverRequest, traceId);
+                });
+    }
+    
+    private Mono<ServerResponse> procesarRegistro(ServerRequest serverRequest, String traceId) {
         
         return serverRequest.bodyToMono(UsuarioRequestDTO.class)
                 .doOnNext(dto -> log.debug("[{}] Procesando solicitud para documento: {}", traceId, 

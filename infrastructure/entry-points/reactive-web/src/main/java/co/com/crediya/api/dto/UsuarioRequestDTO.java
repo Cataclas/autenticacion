@@ -1,5 +1,6 @@
 package co.com.crediya.api.dto;
 
+import co.com.crediya.api.dto.validation.ValidRol;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -50,4 +51,16 @@ public class UsuarioRequestDTO {
     @JsonProperty("telefono")
     @Schema(description = "Número de teléfono del usuario", example = "3001234567")
     private String telefono;
+    
+    @NotBlank(message = "La contraseña es obligatoria")
+    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    @JsonProperty("password")
+    @Schema(description = "Contraseña del usuario", example = "miPassword123", required = true, minLength = 6)
+    private String password;
+    
+    @NotBlank(message = "El rol es obligatorio")
+    @ValidRol
+    @JsonProperty("rol")
+    @Schema(description = "Rol del usuario", example = "SOLICITANTE", required = true, allowableValues = {"ADMINISTRADOR", "ASESOR", "SOLICITANTE"})
+    private String rol;
 }

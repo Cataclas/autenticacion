@@ -1,5 +1,7 @@
 package co.com.crediya.usecase.usuario;
 
+import co.com.crediya.model.auth.gateways.PasswordEncoder;
+import co.com.crediya.model.rol.gateways.RolRepository;
 import co.com.crediya.model.usuario.Usuario;
 import co.com.crediya.model.usuario.exceptions.DatosInvalidosException;
 import co.com.crediya.model.usuario.gateways.UsuarioRepository;
@@ -16,10 +18,12 @@ import java.util.regex.Pattern;
 public class RegistrarUsuarioUseCase {
     
     private final UsuarioRepository usuarioRepository;
+    private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@(.+)$");
     private static final Double SALARIO_MINIMO = 0.0;
     private static final Double SALARIO_MAXIMO = 15000000.0;
-    private static final String ROL_SOLICITANTE = "550e8400-e29b-41d4-a716-446655440002";
+    private static final String[] ROLES_VALIDOS = {"ADMINISTRADOR", "ASESOR", "SOLICITANTE"};
 
     public Mono<Usuario> registrar(Usuario usuario) {
         return validarDatos(usuario)
@@ -51,6 +55,14 @@ public class RegistrarUsuarioUseCase {
         if (usuario.getSalarioBase() == null) {
             errores.add("El salario base es obligatorio");
         }
+        if (esNuloOVacio(usuario.getPassword())) {
+            errores.add("La contraseña es obligatoria");
+        }
+        if (esNuloOVacio(usuario.getIdRol())) {
+            errores.add("El rol es obligatorio");
+        } else if (!esRolValido(usuario.getIdRol())) {
+            errores.add("El rol debe ser: ADMINISTRADOR, ASESOR o SOLICITANTE");
+        }
         
         // Validar formatos solo si los campos no están vacíos
         if (!esNuloOVacio(usuario.getEmail()) && !EMAIL_PATTERN.matcher(usuario.getEmail()).matches()) {
@@ -78,19 +90,35 @@ public class RegistrarUsuarioUseCase {
 
     private Mono<Usuario> guardarUsuario(Usuario usuario) {
         LocalDateTime now = LocalDateTime.now();
-        Usuario usuarioConId = usuario.toBuilder()
-                .idUsuario(UUID.randomUUID().toString())
-                .idRol(ROL_SOLICITANTE)
-                .createdAt(now)
-                .updatedAt(now)
-                .createdBy("SYSTEM")
-                .updatedBy("SYSTEM")
-                .active(true)
-                .build();
-        return usuarioRepository.guardar(usuarioConId);
+        String hashedPassword = passwordEncoder.encode(usuario.getPassword());
+        
+        return rolRepository.findByNombre(usuario.getIdRol())
+                .switchIfEmpty(Mono.error(new DatosInvalidosException("Rol " + usuario.getIdRol() + " no encontrado")))
+                .flatMap(rol -> {
+                    Usuario usuarioConId = usuario.toBuilder()
+                            .idUsuario(UUID.randomUUID().toString())
+                            .idRol(rol.getIdRol())
+                            .password(hashedPassword)
+                            .createdAt(now)
+                            .updatedAt(now)
+                            .createdBy("SYSTEM")
+                            .updatedBy("SYSTEM")
+                            .active(true)
+                            .build();
+                    return usuarioRepository.guardar(usuarioConId);
+                });
     }
 
     private boolean esNuloOVacio(String valor) {
         return valor == null || valor.trim().isEmpty();
+    }
+    
+    private boolean esRolValido(String rol) {
+        for (String rolValido : ROLES_VALIDOS) {
+            if (rolValido.equals(rol)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
