@@ -20,6 +20,8 @@ public class Usuario {
     // Campos adicionales de la HU-001
     private LocalDate fechaNacimiento;
     private String direccion;
+    // Campo para autenticación - HU-3
+    private String password;
     // Campos de auditoría
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -23,6 +23,8 @@ public class UsuarioMapper {
                 .fechaNacimiento(dto.getFechaNacimiento())
                 .direccion(dto.getDireccion())
                 .telefono(dto.getTelefono())
+                .password(dto.getPassword())
+                .idRol(dto.getRol())
                 .build();
     }
 

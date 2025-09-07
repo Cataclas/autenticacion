@@ -1,47 +1,149 @@
-# Proyecto Base Implementando Clean Architecture
+# Microservicio de Autenticación - CrediYa
 
-## Antes de Iniciar
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue.svg)](https://www.postgresql.org/)
+[![Clean Architecture](https://img.shields.io/badge/Architecture-Clean-green.svg)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 
-Empezaremos por explicar los diferentes componentes del proyectos y partiremos de los componentes externos, continuando con los componentes core de negocio (dominio) y por último el inicio y configuración de la aplicación.
+## 📋 Descripción
 
-Lee el artículo [Clean Architecture — Aislando los detalles](https://medium.com/bancolombia-tech/clean-architecture-aislando-los-detalles-4f9530f35d7a)
+Microservicio responsable de la gestión de usuarios, autenticación y autorización del sistema CrediYa. Implementa Clean Architecture con Spring WebFlux para programación reactiva y JWT para autenticación stateless.
 
-# Arquitectura
+## 🏗️ Arquitectura
 
-![Clean Architecture](https://miro.medium.com/max/1400/1*ZdlHz8B0-qu9Y-QO3AXR_w.png)
+### Clean Architecture
+```
+├── domain/
+│   ├── model/          # Entidades de negocio
+│   └── usecase/        # Casos de uso
+├── infrastructure/
+│   ├── driven-adapters/    # Adaptadores de salida (BD, APIs externas)
+│   ├── entry-points/       # Adaptadores de entrada (REST, eventos)
+│   └── helpers/            # Utilidades y configuraciones
+└── applications/
+    └── app-service/        # Aplicación principal
+```
 
-## Domain
+### Responsabilidades
+- **Registro de Usuarios**: Solo ADMIN/ASESOR pueden registrar usuarios
+- **Autenticación JWT**: Generación de tokens con ID de usuario y rol
+- **Validación de Tokens**: Servicio para otros microservicios
+- **Tokens de Servicio**: Comunicación segura entre microservicios
+- **Información de Usuario**: Endpoint para obtener datos de usuario
 
-Es el módulo más interno de la arquitectura, pertenece a la capa del dominio y encapsula la lógica y reglas del negocio mediante modelos y entidades del dominio.
+## 🚀 Stack Tecnológico
 
-## Usecases
+- **Java 21** - Lenguaje de programación
+- **Spring Boot 3.5.4** - Framework principal
+- **Spring WebFlux** - Programación reactiva
+- **Spring R2DBC** - Acceso reactivo a base de datos
+- **Spring Security** - Seguridad y autenticación
+- **JWT** - Tokens de autenticación
+- **PostgreSQL 15** - Base de datos
+- **Lombok** - Reducción de boilerplate
+- **Gradle 8.14.3** - Gestión de dependencias
 
-Este módulo gradle perteneciente a la capa del dominio, implementa los casos de uso del sistema, define lógica de aplicación y reacciona a las invocaciones desde el módulo de entry points, orquestando los flujos hacia el módulo de entities.
+## 📊 Base de Datos
 
-## Infrastructure
+### Esquema: crediya_auth
 
-### Helpers
+#### Entidades Principales
+- **usuario**: Información de usuarios del sistema
+- **rol**: Roles y permisos de acceso
 
-En el apartado de helpers tendremos utilidades generales para los Driven Adapters y Entry Points.
+#### Roles del Sistema
+- **ADMINISTRADOR**: Acceso completo al sistema
+- **ASESOR**: Gestión de solicitudes y evaluación
+- **CLIENTE**: Creación de solicitudes
 
-Estas utilidades no están arraigadas a objetos concretos, se realiza el uso de generics para modelar comportamientos
-genéricos de los diferentes objetos de persistencia que puedan existir, este tipo de implementaciones se realizan
-basadas en el patrón de diseño [Unit of Work y Repository](https://medium.com/@krzychukosobudzki/repository-design-pattern-bc490b256006)
+## 🔐 Seguridad y JWT
 
-Estas clases no puede existir solas y debe heredarse su compartimiento en los **Driven Adapters**
+### Configuración JWT
+- **Algoritmo**: HS256
+- **Expiración usuarios**: 2 horas
+- **Expiración servicios**: 24 horas
+- **Header**: Authorization: Bearer {token}
 
-### Driven Adapters
+### Estructura del Token
+```json
+{
+  "sub": "uuid-user",
+  "role": "uuid-role",
+  "iat": 1757208977,
+  "exp": 1757216177
+}
+```
 
-Los driven adapter representan implementaciones externas a nuestro sistema, como lo son conexiones a servicios rest,
-soap, bases de datos, lectura de archivos planos, y en concreto cualquier origen y fuente de datos con la que debamos
-interactuar.
+### Autorización
+- **Públicos**: `/api/v1/login`, `/api/v1/validate-token`, `/api/v1/service-token`, `/swagger*`, `/v3/api-docs*`, `/webjars/swagger-ui*`, `/actuator*`
+- **Protegidos**: `/api/v1/usuarios` (requiere JWT válido)
+- **Especiales**: `/api/v1/users/info` (solo tokens de servicio o ADMIN)
 
-### Entry Points
+## 📡 API Endpoints
 
-Los entry points representan los puntos de entrada de la aplicación o el inicio de los flujos de negocio.
+### Principales Servicios
 
-## Application
+#### Autenticación
+- `POST /api/v1/login` - Autenticación de usuarios
+- `POST /api/v1/validate-token` - Validación de tokens (servicio a servicio)
+- `POST /api/v1/service-token` - Generar token de servicio
 
-Este módulo es el más externo de la arquitectura, es el encargado de ensamblar los distintos módulos, resolver las dependencias y crear los beans de los casos de use (UseCases) de forma automática, inyectando en éstos instancias concretas de las dependencias declaradas. Además inicia la aplicación (es el único módulo del proyecto donde encontraremos la función “public static void main(String[] args)”.
+#### Gestión de Usuarios
+- `POST /api/v1/usuarios` - Registrar nuevo usuario
+- `POST /api/v1/users/info` - Obtener información de usuario
 
-**Los beans de los casos de uso se disponibilizan automaticamente gracias a un '@ComponentScan' ubicado en esta capa.**
+### Documentación Completa
+- **Swagger UI**: `/webjars/swagger-ui/index.html`
+
+## 🛠️ Configuración
+
+### Variables de Entorno
+
+#### Base de Datos
+```env
+DB_HOST=<database-host>
+DB_PORT=<database-port>
+DB_NAME=<database-name>
+DB_USERNAME=<database-user>
+DB_PASSWORD=<database-password>
+```
+
+#### JWT y Seguridad
+```env
+JWT_SECRET=<jwt-secret-key-256-bits-minimum>
+JWT_EXPIRATION_HOURS=<token-expiration-hours>
+JWT_SERVICE_SECRET=<service-secret-key-256-bits-minimum>
+JWT_SERVICE_EXPIRATION=<service-token-expiration-hours>
+```
+
+#### Aplicación
+```env
+SERVER_PORT=<application-port>
+LOG_LEVEL=<log-level>
+DB_POOL_INITIAL=<initial-pool-size>
+DB_POOL_MAX=<max-pool-size>
+DB_POOL_IDLE=<idle-timeout>
+ADMIN_ROLE=<admin-role-name>
+ASESOR_ROLE=<asesor-role-name>
+SOLICITANTE_ROLE=<solicitante-role-name>
+```
+
+## 🚀 Instalación y Ejecución
+
+### 1. Configurar Base de Datos
+```bash
+# Desde el directorio raíz del proyecto
+cd ../database
+docker-compose up -d crediya-auth-db
+```
+
+### 2. Compilar y Ejecutar
+
+#### Desarrollo Local
+```bash
+# Compilar
+./gradlew build
+
+# Ejecutar
+./gradlew bootRun
+```

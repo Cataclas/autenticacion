@@ -1,0 +1,11 @@
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.8.2'
+    testImplementation('io.projectreactor:reactor-test:3.4.22') {
+        exclude group: 'io.projectreactor.tools', module: 'blockhound-junit-platform'
+    }
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.8.2'
+}
+
+test {
+    useJUnitPlatform()
+}
